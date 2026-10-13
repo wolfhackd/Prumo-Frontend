@@ -11,6 +11,12 @@ export const businesses = [
     service: "Escova",
     price: "R$ 65",
     duration: "45 min",
+    services: [
+      { name: "Escova", price: "R$ 65", duration: "45 min" },
+      { name: "Corte feminino", price: "R$ 90", duration: "1 h" },
+      { name: "Coloração", price: "R$ 220", duration: "2 h 30" },
+      { name: "Hidratação capilar", price: "R$ 110", duration: "1 h" },
+    ],
     tone: "peach",
   },
   {
@@ -25,6 +31,12 @@ export const businesses = [
     service: "Corte + barba",
     price: "R$ 85",
     duration: "1 h",
+    services: [
+      { name: "Corte masculino", price: "R$ 55", duration: "45 min" },
+      { name: "Barba completa", price: "R$ 45", duration: "30 min" },
+      { name: "Corte + barba", price: "R$ 85", duration: "1 h" },
+      { name: "Acabamento", price: "R$ 30", duration: "20 min" },
+    ],
     tone: "sage",
   },
   {
@@ -39,6 +51,12 @@ export const businesses = [
     service: "Limpeza de pele",
     price: "R$ 120",
     duration: "1 h 15",
+    services: [
+      { name: "Limpeza de pele", price: "R$ 120", duration: "1 h 15" },
+      { name: "Design de sobrancelhas", price: "R$ 65", duration: "45 min" },
+      { name: "Massagem relaxante", price: "R$ 160", duration: "1 h" },
+      { name: "Peeling facial", price: "R$ 180", duration: "1 h 30" },
+    ],
     tone: "lilac",
   },
 ] as const;
@@ -81,6 +99,7 @@ export function filterBusinesses(
         business.categoryFilter,
         business.detail,
         business.service,
+        ...business.services.map((service) => service.name),
       ].join(" "),
     );
     const searchableLocation = normalizeSearchText(business.detail);

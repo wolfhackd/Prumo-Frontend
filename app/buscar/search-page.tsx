@@ -10,6 +10,55 @@ import {
 } from "../establishments";
 
 type SortOrder = "relevance" | "rating";
+type Appointment = {
+  businessInitials: string;
+  serviceName: string;
+  date: string;
+  time: string;
+  customerName: string;
+  contact: string;
+};
+type BookingService = {
+  businessInitials: string;
+  serviceName: string;
+};
+
+const appointmentTimes = [
+  "09:00",
+  "10:30",
+  "11:30",
+  "13:30",
+  "15:00",
+  "16:30",
+];
+
+function getBookingDays() {
+  return Array.from({ length: 5 }, (_, index) => {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() + index + 1);
+
+    return {
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+      weekday: new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
+        .format(date)
+        .replace(".", ""),
+      day: new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date),
+      month: new Intl.DateTimeFormat("pt-BR", { month: "short" })
+        .format(date)
+        .replace(".", ""),
+    };
+  });
+}
+
+function formatAppointmentDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(year, month - 1, day, 12));
+}
 
 function BrandMark() {
   return (
@@ -87,6 +136,19 @@ export default function SearchPage() {
   const [category, setCategory] = useState<BusinessCategory>("Todos");
   const [sortOrder, setSortOrder] = useState<SortOrder>("relevance");
   const [expandedBusiness, setExpandedBusiness] = useState<string | null>(null);
+  const [bookingDays, setBookingDays] = useState<ReturnType<
+    typeof getBookingDays
+  >>([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [bookingService, setBookingService] = useState<BookingService | null>(
+    null,
+  );
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const selectedDayIndex = Math.max(
+    0,
+    bookingDays.findIndex((day) => day.value === selectedDate),
+  );
 
   const results = useMemo(() => {
     const filtered = filterBusinesses(searchTerm, location, category);
@@ -110,6 +172,9 @@ export default function SearchPage() {
     setCategory("Todos");
     setSortOrder("relevance");
     setExpandedBusiness(null);
+    setSelectedTime(null);
+    setBookingService(null);
+    setAppointment(null);
   }
 
   const hasFilters =
@@ -245,6 +310,29 @@ export default function SearchPage() {
           <div className="find-list" aria-live="polite">
             {results.map((business) => {
               const expanded = expandedBusiness === business.initials;
+              const isBookingBusiness =
+                bookingService?.businessInitials === business.initials;
+              const chosenService = business.services.find(
+                (service) => service.name === bookingService?.serviceName,
+              );
+
+              function startBooking(serviceName: string) {
+                const availableDays =
+                  bookingDays.length > 0 ? bookingDays : getBookingDays();
+
+                if (bookingDays.length === 0) {
+                  setBookingDays(availableDays);
+                  setSelectedDate(availableDays[0]?.value ?? "");
+                }
+
+                setExpandedBusiness(business.initials);
+                setBookingService({
+                  businessInitials: business.initials,
+                  serviceName,
+                });
+                setSelectedTime(null);
+                setAppointment(null);
+              }
 
               return (
                 <article className="find-card" key={business.initials}>
@@ -282,28 +370,250 @@ export default function SearchPage() {
                       </div>
                       <button
                         aria-expanded={expanded}
+                        aria-controls={`services-${business.initials}`}
                         className="find-card-action"
                         onClick={() =>
                           setExpandedBusiness(expanded ? null : business.initials)
                         }
                         type="button"
                       >
-                        {expanded ? "Ocultar serviço" : "Ver serviço"}
+                        {expanded ? "Ocultar serviços" : "Ver todos os serviços"}
                         <ArrowIcon />
                       </button>
                     </div>
                     {expanded && (
-                      <div className="find-service-details">
-                        <span className="find-service-check">✓</span>
-                        <span>
-                          <strong>{business.service}</strong>
-                          <small>
-                            {business.duration} · a partir de {business.price}
-                          </small>
-                        </span>
-                        <span className="find-service-status">
-                          Consulte horários no estabelecimento
-                        </span>
+                      <div
+                        className="find-service-details"
+                        id={`services-${business.initials}`}
+                      >
+                        <div className="find-service-list-heading">
+                          <strong>Todos os serviços</strong>
+                          <span>{business.services.length} opções disponíveis</span>
+                        </div>
+                        <ul className="find-service-list">
+                          {business.services.map((service) => (
+                            <li key={service.name}>
+                              <span>
+                                <strong>{service.name}</strong>
+                                <small>{service.duration}</small>
+                              </span>
+                              <span className="find-service-price">
+                                <strong>{service.price}</strong>
+                                <button
+                                  className="find-service-book"
+                                  onClick={() => startBooking(service.name)}
+                                  type="button"
+                                  aria-label={`Agendar ${service.name} por ${service.price}`}
+                                >
+                                  Agendar
+                                </button>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="find-service-status">
+                          Horários e serviços exibidos para demonstração.
+                        </p>
+                        {isBookingBusiness && (
+                          <section
+                            className="booking-panel"
+                            aria-labelledby={`booking-title-${business.initials}`}
+                          >
+                            {appointment?.businessInitials === business.initials ? (
+                              <div className="booking-confirmation" role="status">
+                                <span
+                                  className="booking-confirmation-icon"
+                                  aria-hidden="true"
+                                >
+                                  ✓
+                                </span>
+                                <span className="booking-step-label">
+                                  AGENDAMENTO DE DEMONSTRAÇÃO
+                                </span>
+                                <h4>
+                                  Horário reservado,{" "}
+                                  {appointment.customerName.split(" ")[0]}!
+                                </h4>
+                                <p>
+                                  {appointment.serviceName} ·{" "}
+                                  {formatAppointmentDate(appointment.date)} às{" "}
+                                  {appointment.time}
+                                </p>
+                                <p>
+                                  {business.name} · {business.detail}
+                                </p>
+                                <p>Contato informado: {appointment.contact}</p>
+                                <button
+                                  className="booking-secondary-action"
+                                  onClick={() => {
+                                    setAppointment(null);
+                                    setSelectedTime(null);
+                                  }}
+                                  type="button"
+                                >
+                                  Fazer outro agendamento
+                                </button>
+                                <small>
+                                  Esta é uma confirmação demonstrativa. Nenhum
+                                  horário real foi reservado.
+                                </small>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="booking-panel-heading">
+                                  <span className="booking-step-label">
+                                    PRÓXIMO PASSO
+                                  </span>
+                                  <h4
+                                    id={`booking-title-${business.initials}`}
+                                  >
+                                    Escolha um horário
+                                  </h4>
+                                  <p>
+                                    {bookingService.serviceName} ·{" "}
+                                    {chosenService?.duration} ·{" "}
+                                    {chosenService?.price}
+                                  </p>
+                                </div>
+                                <div
+                                  className="booking-days"
+                                  aria-label="Escolher data"
+                                >
+                                  {bookingDays.map((day) => (
+                                    <button
+                                      aria-pressed={
+                                        selectedDate === day.value
+                                      }
+                                      className={`booking-day${selectedDate === day.value ? " selected" : ""}`}
+                                      key={day.value}
+                                      onClick={() => {
+                                        setSelectedDate(day.value);
+                                        setSelectedTime(null);
+                                      }}
+                                      type="button"
+                                    >
+                                      <span>{day.weekday}</span>
+                                      <strong>{day.day}</strong>
+                                      <span>{day.month}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                                <span className="booking-field-label">
+                                  Horários disponíveis
+                                </span>
+                                <div
+                                  className="booking-times"
+                                  aria-label="Horários disponíveis"
+                                >
+                                  {appointmentTimes.map((time, index) => {
+                                    const unavailable =
+                                      (index + selectedDayIndex) % 5 === 0;
+
+                                    return (
+                                      <button
+                                        aria-pressed={selectedTime === time}
+                                        className={`booking-time${selectedTime === time ? " selected" : ""}`}
+                                        disabled={
+                                          unavailable || !selectedDate
+                                        }
+                                        key={time}
+                                        onClick={() => setSelectedTime(time)}
+                                        type="button"
+                                      >
+                                        {time}
+                                        {unavailable && (
+                                          <span className="visually-hidden">
+                                            {" "}
+                                            — indisponível
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <form
+                                  className="booking-form"
+                                  onSubmit={(event) => {
+                                    event.preventDefault();
+                                    if (!selectedTime) return;
+
+                                    const formData = new FormData(
+                                      event.currentTarget,
+                                    );
+                                    setAppointment({
+                                      businessInitials: business.initials,
+                                      serviceName: bookingService.serviceName,
+                                      date: selectedDate,
+                                      time: selectedTime,
+                                      customerName: String(
+                                        formData.get("customerName"),
+                                      ),
+                                      contact: String(formData.get("contact")),
+                                    });
+                                  }}
+                                >
+                                  <label className="booking-form-service">
+                                    <span>Serviço</span>
+                                    <select
+                                      name="service"
+                                      onChange={(event) => {
+                                        setBookingService({
+                                          businessInitials: business.initials,
+                                          serviceName: event.target.value,
+                                        });
+                                        setAppointment(null);
+                                      }}
+                                      value={bookingService.serviceName}
+                                      required
+                                    >
+                                      {business.services.map((service) => (
+                                        <option
+                                          key={service.name}
+                                          value={service.name}
+                                        >
+                                          {service.name} · {service.duration} ·{" "}
+                                          {service.price}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <div className="booking-form-fields">
+                                    <label>
+                                      <span>Seu nome</span>
+                                      <input
+                                        autoComplete="name"
+                                        name="customerName"
+                                        placeholder="Nome completo"
+                                        required
+                                      />
+                                    </label>
+                                    <label>
+                                      <span>E-mail ou telefone</span>
+                                      <input
+                                        name="contact"
+                                        placeholder="Como podemos confirmar?"
+                                        required
+                                      />
+                                    </label>
+                                  </div>
+                                  <button
+                                    className="booking-submit"
+                                    disabled={!selectedTime || !selectedDate}
+                                    type="submit"
+                                  >
+                                    Confirmar agendamento
+                                    <ArrowIcon />
+                                  </button>
+                                </form>
+                                <p className="booking-demo-note">
+                                  Demonstração: a disponibilidade não é
+                                  consultada em tempo real e o agendamento não
+                                  é enviado ao estabelecimento.
+                                </p>
+                              </>
+                            )}
+                          </section>
+                        )}
                       </div>
                     )}
                   </div>
