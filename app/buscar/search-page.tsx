@@ -1,27 +1,120 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   businesses,
   businessCategories,
   filterBusinesses,
+  normalizeSearchText,
+  type Business,
   type BusinessCategory,
 } from "../establishments";
+import {
+  demoStorageKeys,
+  isDemoEstablishment,
+  isDemoAppointment,
+  isDemoService,
+  readDemoList,
+  writeDemoList,
+  type DemoAppointment,
+  type DemoEstablishment,
+  type DemoService,
+} from "../demo-storage";
 
 type SortOrder = "relevance" | "rating";
-type Appointment = {
-  businessInitials: string;
-  serviceName: string;
-  date: string;
-  time: string;
-  customerName: string;
-  contact: string;
-};
+type Appointment = DemoAppointment;
 type BookingService = {
   businessInitials: string;
   serviceName: string;
 };
+
+function formatPrice(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
+
+function formatDuration(value: number) {
+  if (value < 60) {
+    return `${value} min`;
+  }
+
+  const hours = Math.floor(value / 60);
+  const minutes = value % 60;
+  return minutes === 0 ? `${hours} h` : `${hours} h ${minutes}`;
+}
+
+function createInitials(name: string) {
+  const words = name.trim().split(/\s+/);
+
+  if (words.length > 1) {
+    return words
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toLocaleUpperCase("pt-BR");
+  }
+
+  return name.slice(0, 2).toLocaleUpperCase("pt-BR");
+}
+
+function createBusinessDirectory(
+  establishments: DemoEstablishment[],
+  services: DemoService[],
+): Business[] {
+  const tones = ["peach", "sage", "lilac"];
+
+  return establishments.filter((item) => item.active).map((establishment, index) => {
+    const activeServices = services.filter(
+      (service) =>
+        service.establishmentId === establishment.id && service.active,
+    );
+    const highlightedService = activeServices[0];
+    const categoryText = normalizeSearchText(establishment.category);
+    const categoryFilter = categoryText.includes("barbearia")
+      ? "Barbearia"
+      : categoryText.includes("beleza") || categoryText.includes("salao")
+        ? "Beleza"
+        : "Bem-estar";
+    const matchingExample = businesses.find(
+      (business) =>
+        normalizeSearchText(business.name) ===
+        normalizeSearchText(establishment.name),
+    );
+    const neighborhood =
+      establishment.address.split("·").at(-1)?.trim() ||
+      establishment.city.split(",")[0].trim();
+    const city = establishment.city.split(",")[0].trim();
+    const detail = `${neighborhood} · ${city}`;
+    const searchServices = activeServices.map((service) => ({
+      name: service.name,
+      price: formatPrice(service.price),
+      duration: formatDuration(service.duration),
+    }));
+
+    return {
+      initials: createInitials(establishment.name),
+      name: establishment.name,
+      category: establishment.category,
+      categoryFilter,
+      detail,
+      neighborhood,
+      rating: matchingExample?.rating ?? "5,0",
+      numericRating: matchingExample?.numericRating ?? 5,
+      service: highlightedService?.name ?? "Sem serviços ativos",
+      price: highlightedService
+        ? formatPrice(highlightedService.price)
+        : "—",
+      duration: highlightedService
+        ? formatDuration(highlightedService.duration)
+        : "",
+      services: searchServices,
+      tone: matchingExample?.tone ?? tones[index % tones.length],
+    };
+  });
+}
 
 const appointmentTimes = [
   "09:00",
@@ -145,13 +238,89 @@ export default function SearchPage() {
     null,
   );
   const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [bookingError, setBookingError] = useState("");
+  const [savedAppointments, setSavedAppointments] = useState<Appointment[]>([]);
+  const [searchBusinesses, setSearchBusinesses] =
+    useState<readonly Business[]>(businesses);
+  const [directoryError, setDirectoryError] = useState("");
   const selectedDayIndex = Math.max(
     0,
     bookingDays.findIndex((day) => day.value === selectedDate),
   );
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      try {
+        setSavedAppointments(
+          readDemoList(
+            demoStorageKeys.appointments,
+            [],
+            isDemoAppointment,
+          ),
+        );
+      } catch (error) {
+        setBookingError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar os horários salvos neste navegador.",
+        );
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const storedEstablishments = window.localStorage.getItem(
+          demoStorageKeys.establishments,
+        );
+        const storedServices = window.localStorage.getItem(
+          demoStorageKeys.services,
+        );
+
+        if (storedEstablishments === null && storedServices === null) {
+          return;
+        }
+        if (storedEstablishments === null || storedServices === null) {
+          throw new Error(
+            "O catálogo de demonstração está incompleto. Acesse a gestão para carregá-lo.",
+          );
+        }
+
+        const demoEstablishments = readDemoList(
+          demoStorageKeys.establishments,
+          [],
+          isDemoEstablishment,
+        );
+        const demoServices = readDemoList(
+          demoStorageKeys.services,
+          [],
+          isDemoService,
+        );
+        setSearchBusinesses(
+          createBusinessDirectory(demoEstablishments, demoServices),
+        );
+      } catch (error) {
+        setDirectoryError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar o catálogo editado na gestão.",
+        );
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
   const results = useMemo(() => {
-    const filtered = filterBusinesses(searchTerm, location, category);
+    const filtered = filterBusinesses(
+      searchTerm,
+      location,
+      category,
+      searchBusinesses,
+    );
 
     if (sortOrder === "rating") {
       return [...filtered].sort(
@@ -160,7 +329,7 @@ export default function SearchPage() {
     }
 
     return filtered;
-  }, [category, location, searchTerm, sortOrder]);
+  }, [category, location, searchBusinesses, searchTerm, sortOrder]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -281,8 +450,8 @@ export default function SearchPage() {
               {item}
               <span>
                 {item === "Todos"
-                  ? businesses.length
-                  : businesses.filter(
+                  ? searchBusinesses.length
+                  : searchBusinesses.filter(
                       (business) => business.categoryFilter === item,
                     ).length}
               </span>
@@ -508,13 +677,23 @@ export default function SearchPage() {
                                   {appointmentTimes.map((time, index) => {
                                     const unavailable =
                                       (index + selectedDayIndex) % 5 === 0;
+                                    const alreadyBooked = savedAppointments.some(
+                                      (savedAppointment) =>
+                                        savedAppointment.businessInitials ===
+                                          business.initials &&
+                                        savedAppointment.date === selectedDate &&
+                                        savedAppointment.time === time &&
+                                        savedAppointment.status !== "cancelled",
+                                    );
 
                                     return (
                                       <button
                                         aria-pressed={selectedTime === time}
                                         className={`booking-time${selectedTime === time ? " selected" : ""}`}
                                         disabled={
-                                          unavailable || !selectedDate
+                                          unavailable ||
+                                          alreadyBooked ||
+                                          !selectedDate
                                         }
                                         key={time}
                                         onClick={() => setSelectedTime(time)}
@@ -540,8 +719,10 @@ export default function SearchPage() {
                                     const formData = new FormData(
                                       event.currentTarget,
                                     );
-                                    setAppointment({
+                                    const nextAppointment: Appointment = {
+                                      id: globalThis.crypto.randomUUID(),
                                       businessInitials: business.initials,
+                                      businessName: business.name,
                                       serviceName: bookingService.serviceName,
                                       date: selectedDate,
                                       time: selectedTime,
@@ -549,7 +730,50 @@ export default function SearchPage() {
                                         formData.get("customerName"),
                                       ),
                                       contact: String(formData.get("contact")),
-                                    });
+                                      status: "scheduled",
+                                    };
+
+                                    try {
+                                      const appointments = readDemoList(
+                                        demoStorageKeys.appointments,
+                                        [],
+                                        isDemoAppointment,
+                                      );
+                                      const slotAlreadyBooked = appointments.some(
+                                        (savedAppointment) =>
+                                          savedAppointment.businessInitials ===
+                                            business.initials &&
+                                          savedAppointment.date === selectedDate &&
+                                          savedAppointment.time === selectedTime &&
+                                          savedAppointment.status !== "cancelled",
+                                      );
+
+                                      if (slotAlreadyBooked) {
+                                        setSavedAppointments(appointments);
+                                        setSelectedTime(null);
+                                        setBookingError(
+                                          "Esse horário acabou de ser reservado. Escolha outro.",
+                                        );
+                                        return;
+                                      }
+
+                                      writeDemoList(
+                                        demoStorageKeys.appointments,
+                                        [...appointments, nextAppointment],
+                                      );
+                                      setSavedAppointments([
+                                        ...appointments,
+                                        nextAppointment,
+                                      ]);
+                                      setBookingError("");
+                                      setAppointment(nextAppointment);
+                                    } catch (error) {
+                                      setBookingError(
+                                        error instanceof Error
+                                          ? error.message
+                                          : "Não foi possível salvar o agendamento neste navegador.",
+                                      );
+                                    }
                                   }}
                                 >
                                   <label className="booking-form-service">
@@ -605,10 +829,16 @@ export default function SearchPage() {
                                     <ArrowIcon />
                                   </button>
                                 </form>
+                                {bookingError && (
+                                  <p className="booking-storage-error" role="alert">
+                                    {bookingError}
+                                  </p>
+                                )}
                                 <p className="booking-demo-note">
-                                  Demonstração: a disponibilidade não é
-                                  consultada em tempo real e o agendamento não
-                                  é enviado ao estabelecimento.
+                                  Demonstração: o agendamento fica salvo neste
+                                  navegador e pode ser consultado na gestão. A
+                                  disponibilidade não é consultada em tempo
+                                  real.
                                 </p>
                               </>
                             )}
@@ -637,6 +867,11 @@ export default function SearchPage() {
           </div>
         )}
 
+        {directoryError && (
+          <p className="booking-storage-error" role="alert">
+            {directoryError}
+          </p>
+        )}
         <p className="find-demo-note">
           <span aria-hidden="true">✳</span>
           Você pode pesquisar sem criar uma conta. Os estabelecimentos exibidos

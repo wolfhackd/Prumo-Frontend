@@ -1,5 +1,6 @@
 export const businesses = [
   {
+    establishmentId: "casa-amora",
     initials: "CA",
     name: "Casa Amora",
     category: "Salão de beleza",
@@ -20,6 +21,7 @@ export const businesses = [
     tone: "peach",
   },
   {
+    establishmentId: "barbearia-aurora",
     initials: "BA",
     name: "Barbearia Aurora",
     category: "Barbearia",
@@ -40,6 +42,7 @@ export const businesses = [
     tone: "sage",
   },
   {
+    establishmentId: "lume-estetica",
     initials: "LE",
     name: "Lume Estética",
     category: "Estética",
@@ -70,6 +73,23 @@ export const businessCategories = [
 
 export type BusinessCategory = (typeof businessCategories)[number];
 
+export type Business = {
+  establishmentId?: string;
+  initials: string;
+  name: string;
+  category: string;
+  categoryFilter: Exclude<BusinessCategory, "Todos">;
+  detail: string;
+  neighborhood: string;
+  rating: string;
+  numericRating: number;
+  service: string;
+  price: string;
+  duration: string;
+  services: readonly { name: string; price: string; duration: string }[];
+  tone: string;
+};
+
 export function normalizeSearchText(value: string) {
   return value
     .normalize("NFD")
@@ -83,6 +103,7 @@ export function filterBusinesses(
   searchTerm: string,
   location: string,
   category: BusinessCategory,
+  businessList: readonly Business[] = businesses,
 ) {
   const searchTerms = normalizeSearchText(searchTerm)
     .split(/\s+/)
@@ -91,7 +112,7 @@ export function filterBusinesses(
     .split(/\s+/)
     .filter(Boolean);
 
-  return businesses.filter((business) => {
+  return businessList.filter((business) => {
     const searchableDetails = normalizeSearchText(
       [
         business.name,
