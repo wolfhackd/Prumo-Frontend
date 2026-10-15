@@ -75,10 +75,11 @@ export type BusinessCategory = (typeof businessCategories)[number];
 
 export type Business = {
   establishmentId?: string;
+  website?: string | null;
   initials: string;
   name: string;
   category: string;
-  categoryFilter: Exclude<BusinessCategory, "Todos">;
+  categoryFilter?: Exclude<BusinessCategory, "Todos">;
   detail: string;
   neighborhood: string;
   rating: string;
