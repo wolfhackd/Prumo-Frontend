@@ -1,6 +1,6 @@
 export const NavBar = () => {
   return (
-    <nav className="border-b border-[#6155F5] flex flex-col md:flex-row items-center justify-between w-full ">
+    <nav className="border-b border-[#6155F5] flex flex-col md:flex-row items-center justify-between w-full pb-6">
       {/* Esse texto do prumo fica bom em só branco também */}
       {/* <h1 className="monoton-regular text-[40px] lg:text-[40px] text-white">
         PRUMO

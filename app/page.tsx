@@ -1,3 +1,4 @@
+import { Hero } from "./home/hero";
 import { NavBar } from "./home/navbar";
 
 export default function Home() {
@@ -5,7 +6,7 @@ export default function Home() {
     <>
       <main className="bg-black py-6 md:px-16">
         <NavBar />
-        <p>Teste</p>
+        <Hero />
       </main>
     </>
   );
