@@ -1,27 +1,12 @@
-import {
-  BenefitsStrip,
-  ClosingSection,
-  CustomerSection,
-  HeroSection,
-  ManagementSection,
-  SiteFooter,
-  SiteHeader,
-  StepsSection,
-} from "./home/sections";
+import { NavBar } from "./home/navbar";
 
 export default function Home() {
   return (
     <>
-      <SiteHeader />
-      <main>
-        <HeroSection />
-        <BenefitsStrip />
-        <ManagementSection />
-        <CustomerSection />
-        <StepsSection />
-        <ClosingSection />
+      <main className="bg-black py-6 md:px-16">
+        <NavBar />
+        <p>Teste</p>
       </main>
-      <SiteFooter />
     </>
   );
 }
