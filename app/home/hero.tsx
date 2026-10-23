@@ -26,7 +26,7 @@ export const Hero = () => {
 
   return (
     <section>
-      <div className="flex flex-col justify-center lg:flex-row lg:relative">
+      <div className="flex flex-col justify-center lg:flex-row lg:relative ">
         <h1 className="sora font-bold text-3xl md:text-5xl/snug text-white py-28 z-10 text-center lg:text-left lg:w-full">
           FEITO PARA O <span className="text-[#FF0000]">EMPREENDEDOR</span>
           <br /> QUE <span className="text-[#34C759]">APROVEITA</span> CADA{" "}
