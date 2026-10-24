@@ -1,6 +1,6 @@
 export const Philosophy = () => {
   return (
-    <section className="bg-[#FFCC00] text-black flex flex-col justify-around py-6 md:px-16 min-h-screen">
+    <section className="bg-[#FFCC00] text-black flex flex-col justify-around py-6 md:px-16 min-h-screen sticky top-0 z-10">
       <div className="flex flex-row items-center justify-center md:justify-start   md:items-end py-8 gap-2">
         <h1 className="monoton-regular text-3xl md:text-4xl lg:text-5xl">
           PRUMO
