@@ -1,5 +1,3 @@
-import { SlotMachineRollText } from "@/components/SlotMachineRollText";
-
 export const NavBar = () => {
   return (
     <nav className="border-b border-[#6155F5] flex flex-col md:flex-row items-center justify-between w-full pb-6">
@@ -15,24 +13,17 @@ export const NavBar = () => {
         <span className="text-[#FF0000]">O</span>
       </h1>
       <div className="flex justify-around items-center w-full flex-col gap-2 py-2 md:flex-row lg:flex-row md:w-2/8">
-        {/* <a href="/" className="text-[#6155F5] font-bold">
+        <a href="/registro" className="text-[#6155F5] font-bold">
           PARA DONOS
-        </a> */}
-        <SlotMachineRollText
-          href="/"
-          from="PARA DONOS"
-          to="PARA DONOS"
-          className="text-[#6155F5] font-bold"
-        />
-        {/* <a href="/" className="text-[#34C759] font-bold">
+        </a>
+
+        <a href="/" className="text-[#34C759] font-bold">
           PARA CLIENTES
-          </a> */}
-        <SlotMachineRollText
-          href="/"
-          from="PARA CLIENTES"
-          to="PARA CLIENTES"
-          className="text-[#34C759] font-bold"
-        />
+        </a>
+
+        <a href="/login" className="text-[#FFCC00] font-bold">
+          ENTRAR
+        </a>
       </div>
       <div className="hidden md:flex items-center">
         <span className="text-xs font-bold text-white">

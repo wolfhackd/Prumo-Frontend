@@ -1,7 +1,10 @@
 "use client";
+import { useRouter } from "next/navigation";
 import SpecularButton from "@/components/SpecularButton";
 
 export const HeroButton = () => {
+  const router = useRouter();
+
   return (
     <SpecularButton
       size="lg"
@@ -20,9 +23,9 @@ export const HeroButton = () => {
       followMouse
       proximity={250}
       style={{}}
-      onClick={() => console.log("clicked")}
+      onClick={() => router.push("/registro")}
     >
-      Get Started
+      Cadastrar meu negócio
     </SpecularButton>
   );
 };
