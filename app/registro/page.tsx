@@ -74,6 +74,12 @@ export default function OwnerRegistrationPage() {
           <p className="sora mt-6 flex items-center gap-2 text-xs text-black/55">
             Seus dados são usados para criar seu acesso ao Prumo.
             <ArrowUpRight size={14} aria-hidden="true" />
+            <Link
+              href="/login"
+              className="font-semibold text-[#6155F5] underline underline-offset-4 hover:opacity-75"
+            >
+              Já tem conta? Entre aqui
+            </Link>
           </p>
         </section>
       </div>

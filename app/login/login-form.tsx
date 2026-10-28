@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { api } from "@/app/lib/api";
+import { ownerService } from "../services";
 
 const inputClassName =
   "sora mt-2 w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#6155F5] focus:ring-2 focus:ring-[#6155F5]/15";
@@ -46,8 +47,9 @@ export function LoginForm() {
     };
 
     try {
-      await api.post("/auth/login", credentials);
+      const response = await ownerService.login(credentials);
       setStatus({ type: "success", message: "Login realizado com sucesso." });
+      //Só falta tratar o que ocorre depois do login
     } catch (error: unknown) {
       setStatus({ type: "error", message: getLoginErrorMessage(error) });
     } finally {

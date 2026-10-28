@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { ownerService } from "@/app/services/index";
 import { Eye, EyeOff } from "lucide-react";
+import { OwnerCreateData } from "../services/owner/types";
+import { useRouter } from "next/navigation";
 
 const inputClassName =
   "sora mt-2 w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#6155F5] focus:ring-2 focus:ring-[#6155F5]/15";
@@ -9,16 +12,53 @@ const inputClassName =
 export function OwnerRegistrationForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionLock = useRef(false);
+  const router = useRouter();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus(
-      "Dados validados no navegador. O envio ainda precisa ser conectado à API de cadastro.",
-    );
+
+    if (submissionLock.current) {
+      return;
+    }
+
+    submissionLock.current = true;
+    setIsSubmitting(true);
+    setStatus("Criando sua conta...");
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      const data = {
+        name: formData.get("name"),
+        cpf: formData.get("cpf"),
+        phone: formData.get("phone"),
+        email: formData.get("email"),
+        password: formData.get("password"),
+      } as OwnerCreateData;
+
+      await ownerService.create(data);
+      setStatus("Cadastro realizado com sucesso");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (error: unknown) {
+      setStatus(
+        error instanceof Error ? error.message : "Erro ao cadastrar",
+      );
+      submissionLock.current = false;
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form
+      aria-busy={isSubmitting}
+      className="space-y-5"
+      onSubmit={handleSubmit}
+    >
+      <fieldset className="space-y-5" disabled={isSubmitting}>
       <div>
         <label htmlFor="name" className="sora text-sm font-semibold">
           Nome completo
@@ -121,11 +161,12 @@ export function OwnerRegistrationForm() {
       </div>
 
       <button
-        className="sora flex w-full items-center justify-center gap-3 rounded-full bg-[#FFCC00] px-6 py-4 text-sm font-bold cursor-pointer transition hover:bg-[#f0bd00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+        className="sora flex w-full items-center justify-center gap-3 rounded-full bg-[#FFCC00] px-6 py-4 text-sm font-bold cursor-pointer transition hover:bg-[#f0bd00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
         type="submit"
       >
-        Criar minha conta
+        {isSubmitting ? "Criando sua conta..." : "Criar minha conta"}
       </button>
+      </fieldset>
 
       <p aria-live="polite" className="sora min-h-5 text-xs text-black/65">
         {status}
