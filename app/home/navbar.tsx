@@ -17,7 +17,7 @@ export const NavBar = () => {
           PARA DONOS
         </a>
 
-        <a href="/" className="text-[#34C759] font-bold">
+        <a href="/establishments" className="text-[#34C759] font-bold">
           PARA CLIENTES
         </a>
 

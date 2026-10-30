@@ -1,6 +1,5 @@
 import { Benefits } from "./home/benefits";
 import { Hero } from "./home/hero";
-import { NavBar } from "./home/navbar";
 import { Philosophy } from "./home/philosophy";
 import { Solution } from "./home/solution";
 
