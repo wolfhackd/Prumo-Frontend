@@ -10,3 +10,14 @@ export interface OwnerLoginData {
     emailOrCpf: string;
     password: string
 }
+
+export interface OwnerSession {
+    authenticated: boolean;
+    user: {
+        id: string;
+        name: string;
+        cpf: string;
+        phone: string;
+        email: string;
+    };
+}

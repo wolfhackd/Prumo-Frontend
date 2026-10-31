@@ -94,10 +94,16 @@ export class EstablishmentServiceClient {
     if (
       typeof response.data !== "object" ||
       response.data === null ||
-      !Array.isArray(response.data.establishments)
+      !Array.isArray(response.data.establishments) ||
+      response.data.establishments.some(
+        (establishment) =>
+          typeof establishment !== "object" ||
+          establishment === null ||
+          !Array.isArray(establishment.services),
+      )
     ) {
       throw new Error(
-        "A resposta da API não contém a lista de estabelecimentos do responsável.",
+        "A resposta da API não contém os estabelecimentos e serviços do responsável.",
       );
     }
 

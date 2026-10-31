@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
-import { api } from "@/app/lib/api";
+import { useRouter } from "next/navigation";
 import { ownerService } from "../services";
 
 const inputClassName =
@@ -25,6 +25,14 @@ function getLoginErrorMessage(error: unknown) {
     ) {
       return responseData.message;
     }
+
+    if (error.request && !error.response) {
+      return "Não foi possível conectar à API. Verifique sua conexão e tente novamente.";
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
   }
 
   return "Não foi possível entrar. Verifique sua conexão e tente novamente.";
@@ -34,6 +42,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<LoginStatus | null>(null);
+  const router = useRouter();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,9 +56,10 @@ export function LoginForm() {
     };
 
     try {
-      const response = await ownerService.login(credentials);
+      await ownerService.login(credentials);
+      await ownerService.getSession();
       setStatus({ type: "success", message: "Login realizado com sucesso." });
-      //Só falta tratar o que ocorre depois do login
+      router.replace("/my-establishments");
     } catch (error: unknown) {
       setStatus({ type: "error", message: getLoginErrorMessage(error) });
     } finally {
