@@ -103,7 +103,7 @@ export const Nav = () => {
           <p className="text-xs md:hidden">{dashboardDate}</p>
           <div className="flex items-center gap-2">
             <Link
-              href="/establishments"
+              href="/my-establishments"
               className="hidden min-h-9 items-center gap-2 rounded-full border border-[#D8D4CC] px-3 text-xs font-semibold transition-colors hover:bg-white/70 md:inline-flex"
             >
               <Store aria-hidden="true" className="size-4" />
@@ -123,7 +123,7 @@ export const Nav = () => {
         </div>
         <div className="border-t border-[#D8D4CC] px-4 py-2 md:hidden">
           <Link
-            href="/establishments"
+            href="/my-establishments"
             className="flex min-h-9 items-center justify-center gap-2 rounded-full border border-[#D8D4CC] text-xs font-semibold transition-colors hover:bg-white/70"
           >
             <Store aria-hidden="true" className="size-4" />
