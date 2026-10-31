@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { establishmentService } from "@/app/services";
 import type { Establishment } from "@/app/services/establishments/establishment-service";
@@ -44,10 +45,12 @@ function getErrorMessage(error: unknown) {
 
 export default function EstablishmentsPage() {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [selectedEstablishmentId, setSelectedEstablishmentId] = useState("");
   const [page, setPage] = useState(1);
   const [retryCount, setRetryCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     let isCurrent = true;
@@ -57,6 +60,9 @@ export default function EstablishmentsPage() {
       .then((results) => {
         if (isCurrent) {
           setEstablishments(results);
+          setSelectedEstablishmentId(
+            localStorage.getItem("prumo:active-establishment-id") ?? "",
+          );
         }
       })
       .catch((error: unknown) => {
@@ -87,6 +93,12 @@ export default function EstablishmentsPage() {
     setRetryCount((count) => count + 1);
   }
 
+  function selectEstablishment(establishmentId: string) {
+    localStorage.setItem("prumo:active-establishment-id", establishmentId);
+    setSelectedEstablishmentId(establishmentId);
+    router.push("/dashboard");
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f7fb] px-4 py-10 sm:px-8">
       <div className="mx-auto max-w-5xl">
@@ -98,10 +110,11 @@ export default function EstablishmentsPage() {
             ← Voltar para o início
           </Link>
           <h1 className="mt-5 text-3xl font-bold text-[#171717] sm:text-4xl">
-            Estabelecimentos
+            Escolha um estabelecimento
           </h1>
           <p className="mt-2 text-sm text-black/60">
-            Consulte estabelecimentos e os serviços oferecidos por cada um.
+            Selecione um dos estabelecimentos vinculados à sua conta para
+            continuar.
           </p>
         </header>
 
@@ -128,10 +141,16 @@ export default function EstablishmentsPage() {
           </div>
         ) : establishments.length === 0 ? (
           <p className="rounded-2xl border border-black/10 bg-white p-8 text-center text-sm text-black/60">
-            Nenhum estabelecimento encontrado nesta página.
+            Nenhum estabelecimento vinculado à sua conta foi encontrado.
           </p>
         ) : (
-          <section aria-label="Lista de estabelecimentos" className="space-y-4">
+          <section
+            aria-label="Estabelecimentos da sua conta"
+            className="space-y-4"
+          >
+            <h2 className="text-lg font-semibold text-[#171717]">
+              Seus estabelecimentos
+            </h2>
             {establishments.map((establishment) => (
               <article
                 className="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6"
@@ -177,9 +196,23 @@ export default function EstablishmentsPage() {
                       </div>
                     )}
                   </div>
-                  <p className="shrink-0 text-xs text-black/45">
-                    Desde {formatDate(establishment.createdAt)}
-                  </p>
+                  <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                    <p className="text-xs text-black/45">
+                      Desde {formatDate(establishment.createdAt)}
+                    </p>
+                    <button
+                      aria-pressed={
+                        selectedEstablishmentId === establishment.id
+                      }
+                      className="rounded-full bg-[#FFCC00] px-4 py-2 text-sm font-semibold text-[#171717] transition hover:bg-[#f0bd00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717]"
+                      onClick={() => selectEstablishment(establishment.id)}
+                      type="button"
+                    >
+                      {selectedEstablishmentId === establishment.id
+                        ? "Estabelecimento atual"
+                        : "Usar este estabelecimento"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-5 border-t border-black/10 pt-4">

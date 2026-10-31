@@ -1,10 +1,12 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   CalendarDays,
   ChevronDown,
   Home,
   MessageSquare,
   Settings,
+  Store,
   UsersRound,
   Wrench,
 } from "lucide-react";
@@ -99,16 +101,34 @@ export const Nav = () => {
           </a>
           <p className="hidden text-sm md:block">{dashboardDate}</p>
           <p className="text-xs md:hidden">{dashboardDate}</p>
-          <button
-            type="button"
-            aria-label="Perfil de Mauro"
-            className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-black/5"
+          <div className="flex items-center gap-2">
+            <Link
+              href="/establishments"
+              className="hidden min-h-9 items-center gap-2 rounded-full border border-[#D8D4CC] px-3 text-xs font-semibold transition-colors hover:bg-white/70 md:inline-flex"
+            >
+              <Store aria-hidden="true" className="size-4" />
+              Mudar estabelecimento
+            </Link>
+            <button
+              type="button"
+              aria-label="Perfil de Mauro"
+              className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-black/5"
+            >
+              <span className="flex size-8 items-center justify-center rounded-full bg-[#343434] text-xs font-semibold text-white">
+                MS
+              </span>
+              <ChevronDown aria-hidden="true" className="size-4" />
+            </button>
+          </div>
+        </div>
+        <div className="border-t border-[#D8D4CC] px-4 py-2 md:hidden">
+          <Link
+            href="/establishments"
+            className="flex min-h-9 items-center justify-center gap-2 rounded-full border border-[#D8D4CC] text-xs font-semibold transition-colors hover:bg-white/70"
           >
-            <span className="flex size-8 items-center justify-center rounded-full bg-[#343434] text-xs font-semibold text-white">
-              MS
-            </span>
-            <ChevronDown aria-hidden="true" className="size-4" />
-          </button>
+            <Store aria-hidden="true" className="size-4" />
+            Mudar estabelecimento
+          </Link>
         </div>
       </header>
       <nav
