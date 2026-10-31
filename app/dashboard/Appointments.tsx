@@ -36,7 +36,7 @@ export const Appointments = () => {
       <header className="flex items-center justify-between px-1 pb-3">
         <h2
           id="upcoming-appointments-title"
-          className="text-lg font-bold sm:text-xl"
+          className="text-lg font-bold sm:text-xl sora"
         >
           Próximos Agendamentos
         </h2>
