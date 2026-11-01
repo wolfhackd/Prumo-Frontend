@@ -4,8 +4,8 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { establishmentService, ownerService } from "@/app/services";
-import type { EstablishmentCreateData } from "@/app/services/establishments/establishment-service";
+import { establishmentService, ownerService } from "@/lib/services";
+import type { EstablishmentCreateData } from "@/lib/services/establishments/establishment-service";
 
 const inputClassName =
   "mt-2 w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#6155F5] focus:ring-2 focus:ring-[#6155F5]/15";

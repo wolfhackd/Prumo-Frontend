@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  { label: "Resumo", icon: Home, active: true },
+  { label: "Resumo", icon: Home },
   { label: "Calendário", icon: CalendarDays },
   { label: "Clientes", icon: UsersRound },
   { label: "Serviços", icon: Wrench },
@@ -27,41 +27,60 @@ const menuItems = [
 ];
 
 const mobileMenuItems = [
-  { label: "Início", icon: Home, active: true },
+  { label: "Início", icon: Home },
   { label: "Agenda", icon: CalendarDays },
   { label: "Clientes", icon: UsersRound },
+  { label: "Serviços", icon: Wrench },
   { label: "Configurações", icon: Settings },
 ];
 
 const dashboardDate = "Terça-feira, 26 de Outubro";
 
-function MenuItems() {
-  return menuItems.map(({ label, icon: Icon, active }) => (
-    <li key={label}>
-      {active ? (
-        <a
-          href="/dashboard"
-          aria-current="page"
-          className="flex items-center gap-3 rounded-lg bg-[#FFCC00] px-4 py-3 font-semibold text-[#111111]"
-        >
-          <Icon aria-hidden="true" className="size-5 shrink-0" />
-          <span>{label}</span>
-        </a>
-      ) : (
-        <span
-          aria-disabled="true"
-          title="Disponível em breve"
-          className="flex cursor-default items-center gap-3 rounded-lg px-4 py-3 text-white/85 transition-colors hover:bg-white/10"
-        >
-          <Icon aria-hidden="true" className="size-5 shrink-0" />
-          <span>{label}</span>
-        </span>
-      )}
-    </li>
-  ));
+type ActivePage = "dashboard" | "services";
+
+function MenuItems({ activePage }: { activePage: ActivePage }) {
+  return menuItems.map(({ label, icon: Icon }) => {
+    const href =
+      label === "Resumo"
+        ? "/dashboard"
+        : label === "Serviços"
+          ? "/services"
+          : null;
+    const isActive =
+      (activePage === "dashboard" && label === "Resumo") ||
+      (activePage === "services" && label === "Serviços");
+
+    return (
+      <li key={label}>
+        {href ? (
+          <Link
+            href={href}
+            aria-current={isActive ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-lg px-4 py-3 ${
+              isActive
+                ? "bg-[#FFCC00] font-semibold text-[#111111]"
+                : "text-white/85 transition-colors hover:bg-white/10"
+            }`}
+          >
+            <Icon aria-hidden="true" className="size-5 shrink-0" />
+            <span>{label}</span>
+          </Link>
+        ) : (
+          <span
+            aria-disabled="true"
+            title="Disponível em breve"
+            className="flex cursor-default items-center gap-3 rounded-lg px-4 py-3 text-white/85 transition-colors hover:bg-white/10"
+          >
+            <Icon aria-hidden="true" className="size-5 shrink-0" />
+            <span>{label}</span>
+          </span>
+        )}
+      </li>
+    );
+  });
 }
 
-export const Nav = () => {
+export const Nav = ({ activePage = "dashboard" }: { activePage?: ActivePage }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
@@ -101,7 +120,7 @@ export const Nav = () => {
 
         <nav aria-label="Menu principal" className="flex flex-1 flex-col px-5 py-6">
           <ul className="space-y-2">
-            <MenuItems />
+            <MenuItems activePage={activePage} />
           </ul>
 
           <div className="mt-auto flex items-center justify-between border-t border-white/15 px-1 pt-6">
@@ -218,30 +237,44 @@ export const Nav = () => {
         aria-label="Menu principal"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#101010] pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:hidden"
       >
-        <ul className="mx-auto grid min-h-16 max-w-lg grid-cols-4">
-          {mobileMenuItems.map(({ label, icon: Icon, active }) => (
-            <li key={label}>
-              {active ? (
-                <a
-                  href="/dashboard"
-                  aria-current="page"
-                  className="flex h-full min-h-16 flex-col items-center justify-center gap-1 text-[#FFCC00]"
-                >
-                  <Icon aria-hidden="true" className="size-5" />
-                  <span className="text-[10px] font-medium">{label}</span>
-                </a>
-              ) : (
-                <span
-                  aria-disabled="true"
-                  title="Disponível em breve"
-                  className="flex h-full min-h-16 cursor-default flex-col items-center justify-center gap-1 text-white/55"
-                >
-                  <Icon aria-hidden="true" className="size-5" />
-                  <span className="text-[10px] font-medium">{label}</span>
-                </span>
-              )}
-            </li>
-          ))}
+        <ul className="mx-auto grid min-h-16 max-w-lg grid-cols-5">
+          {mobileMenuItems.map(({ label, icon: Icon }) => {
+            const href =
+              label === "Início"
+                ? "/dashboard"
+                : label === "Serviços"
+                  ? "/services"
+                  : null;
+            const isActive =
+              (activePage === "dashboard" && label === "Início") ||
+              (activePage === "services" && label === "Serviços");
+
+            return (
+              <li key={label}>
+                {href ? (
+                  <Link
+                    href={href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`flex h-full min-h-16 flex-col items-center justify-center gap-1 ${
+                      isActive ? "text-[#FFCC00]" : "text-white/75"
+                    }`}
+                  >
+                    <Icon aria-hidden="true" className="size-5" />
+                    <span className="text-[10px] font-medium">{label}</span>
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    title="Disponível em breve"
+                    className="flex h-full min-h-16 cursor-default flex-col items-center justify-center gap-1 text-white/55"
+                  >
+                    <Icon aria-hidden="true" className="size-5" />
+                    <span className="text-[10px] font-medium">{label}</span>
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </>

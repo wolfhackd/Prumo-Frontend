@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-import { ownerService } from "@/app/services/index";
+import { ownerService } from "@/lib/services";
 import { Eye, EyeOff } from "lucide-react";
-import { OwnerCreateData } from "../services/owner/types";
+import type { OwnerCreateData } from "@/lib/services/owner/types";
 import { useRouter } from "next/navigation";
 
 const inputClassName =

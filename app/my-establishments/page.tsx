@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { establishmentService } from "@/app/services";
-import type { Establishment } from "@/app/services/establishments/establishment-service";
+import { establishmentService } from "@/lib/services";
+import type { Establishment } from "@/lib/services/establishments/establishment-service";
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat("pt-BR", {

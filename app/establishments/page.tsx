@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { establishmentService } from "@/app/services";
-import type { Establishment } from "@/app/services/establishments/establishment-service";
+import { establishmentService } from "@/lib/services";
+import type { Establishment } from "@/lib/services/establishments/establishment-service";
 
 const PAGE_SIZE = 10;
 

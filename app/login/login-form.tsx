@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ownerService } from "../services";
+import { ownerService } from "@/lib/services";
 
 const inputClassName =
   "sora mt-2 w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#6155F5] focus:ring-2 focus:ring-[#6155F5]/15";
