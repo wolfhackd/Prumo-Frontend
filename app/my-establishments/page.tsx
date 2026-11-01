@@ -50,11 +50,18 @@ export default function EstablishmentsPage() {
 
   useEffect(() => {
     let isCurrent = true;
+    let isRedirecting = false;
 
     establishmentService
       .getForOwner()
       .then((results) => {
         if (isCurrent) {
+          if (results.length === 0) {
+            isRedirecting = true;
+            router.replace("/my-establishments/new");
+            return;
+          }
+
           setEstablishments(results);
           const storedEstablishmentId = localStorage.getItem(
             "prumo:active-establishment-id",
@@ -77,7 +84,7 @@ export default function EstablishmentsPage() {
         }
       })
       .finally(() => {
-        if (isCurrent) {
+        if (isCurrent && !isRedirecting) {
           setIsLoading(false);
         }
       });
@@ -85,7 +92,7 @@ export default function EstablishmentsPage() {
     return () => {
       isCurrent = false;
     };
-  }, [retryCount]);
+  }, [retryCount, router]);
 
   function retry() {
     setErrorMessage("");

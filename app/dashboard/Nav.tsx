@@ -10,6 +10,7 @@ import {
   Home,
   LogOut,
   MessageSquare,
+  Plus,
   Settings,
   Store,
   UsersRound,
@@ -175,6 +176,14 @@ export const Nav = () => {
                   >
                     <Store aria-hidden="true" className="size-4" />
                     Meus estabelecimentos
+                  </Link>
+                  <Link
+                    href="/my-establishments/new"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#222] transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-[#6155F5]"
+                  >
+                    <Plus aria-hidden="true" className="size-4" />
+                    Criar estabelecimento
                   </Link>
                   <button
                     type="button"

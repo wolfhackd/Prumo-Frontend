@@ -30,8 +30,21 @@ export interface Establishment {
   businessHours: EstablishmentBusinessHour[];
 }
 
+export interface EstablishmentCreateData {
+  name: string;
+  email: string;
+  phone: string;
+  website: string | null;
+  location: string | null;
+  ownerId: string;
+}
+
 export class EstablishmentServiceClient {
   constructor(private readonly http: AxiosInstance) {}
+
+  async create(data: EstablishmentCreateData): Promise<void> {
+    await this.http.post("/establishment", data);
+  }
 
   async getAll(page: number, limit: number): Promise<Establishment[]> {
     if (!Number.isInteger(page) || page < 1) {
@@ -87,9 +100,21 @@ export class EstablishmentServiceClient {
   }
 
   async getForOwner(): Promise<Establishment[]> {
-    const response = await this.http.get<{
-      establishments: Establishment[];
-    }>("/establishment/owner");
+    let response;
+    try {
+      response = await this.http.get<{
+        establishments: Establishment[];
+      }>("/establishment/owner");
+    } catch (error: unknown) {
+      if (
+        axios.isAxiosError<{ error?: string }>(error) &&
+        error.response?.data?.error === "No establishments found!"
+      ) {
+        return [];
+      }
+
+      throw error;
+    }
 
     if (
       typeof response.data !== "object" ||
