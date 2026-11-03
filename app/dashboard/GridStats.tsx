@@ -3,6 +3,7 @@ import {
   ChartNoAxesColumnIncreasing,
   UserRound,
 } from "lucide-react";
+import { DashboardPageTitle } from "./PageTitle";
 
 const stats = [
   {
@@ -25,12 +26,12 @@ const stats = [
 export const GridStats = () => {
   return (
     <section aria-labelledby="dashboard-summary-title">
-      <h1
+      <DashboardPageTitle
         id="dashboard-summary-title"
-        className="mb-4 text-2xl font-bold md:mb-5"
+        className="mb-4 md:mb-5"
       >
         Resumo
-      </h1>
+      </DashboardPageTitle>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)] md:gap-4">
         {stats.map(({ label, value, icon: Icon }) => (
           <article

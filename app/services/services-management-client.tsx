@@ -9,6 +9,7 @@ import type {
   EstablishmentServiceItem,
 } from "@/lib/services/establishments/establishment-service";
 import type { ServiceData } from "@/lib/services/establishments/service-service";
+import { DashboardPageTitle } from "../dashboard/PageTitle";
 
 const inputClassName =
   "mt-2 w-full rounded-xl border border-[#D8D4CC] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#6155F5] focus:ring-2 focus:ring-[#6155F5]/15";
@@ -181,7 +182,9 @@ export function ServicesManagementClient() {
       <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-[#6155F5]">Gerenciamento</p>
-          <h1 className="mt-1 text-3xl font-bold text-[#171717]">Serviços</h1>
+          <DashboardPageTitle className="mt-1 text-[#171717]">
+            Serviços
+          </DashboardPageTitle>
           {establishment && (
             <p className="mt-2 text-sm text-black/60">
               Serviços de{" "}
