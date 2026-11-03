@@ -36,7 +36,7 @@ const mobileMenuItems = [
 
 const dashboardDate = "Terça-feira, 26 de Outubro";
 
-type ActivePage = "dashboard" | "services";
+type ActivePage = "dashboard" | "services" | "settings";
 
 function MenuItems({ activePage }: { activePage: ActivePage }) {
   return menuItems.map(({ label, icon: Icon }) => {
@@ -45,10 +45,13 @@ function MenuItems({ activePage }: { activePage: ActivePage }) {
         ? "/dashboard"
         : label === "Serviços"
           ? "/services"
+          : label === "Configurações"
+            ? "/settings"
           : null;
     const isActive =
       (activePage === "dashboard" && label === "Resumo") ||
-      (activePage === "services" && label === "Serviços");
+      (activePage === "services" && label === "Serviços") ||
+      (activePage === "settings" && label === "Configurações");
 
     return (
       <li key={label}>
@@ -244,10 +247,13 @@ export const Nav = ({ activePage = "dashboard" }: { activePage?: ActivePage }) =
                 ? "/dashboard"
                 : label === "Serviços"
                   ? "/services"
+                  : label === "Configurações"
+                    ? "/settings"
                   : null;
             const isActive =
               (activePage === "dashboard" && label === "Início") ||
-              (activePage === "services" && label === "Serviços");
+              (activePage === "services" && label === "Serviços") ||
+              (activePage === "settings" && label === "Configurações");
 
             return (
               <li key={label}>

@@ -8,6 +8,12 @@ export interface ServiceData {
   establishId: string;
 }
 
+export interface ServiceUpdateData {
+  name: string;
+  price: number;
+  duration: number;
+}
+
 export class ServiceServiceClient {
   constructor(private readonly http: AxiosInstance) {}
 
@@ -16,12 +22,16 @@ export class ServiceServiceClient {
     await this.http.post("/service/create", data);
   }
 
-  async update(id: string, data: ServiceData): Promise<void> {
+  async update(id: string, data: ServiceUpdateData): Promise<void> {
     if (!id.trim()) {
       throw new Error("O identificador do serviço é obrigatório.");
     }
 
-    this.validate(data);
+    this.validateNameAndPrice(data);
+    if (!Number.isSafeInteger(data.duration) || data.duration < 1) {
+      throw new Error("A duração deve ser um número inteiro maior que zero.");
+    }
+
     await this.http.patch("/service/edit", {
       serviceId: id,
       name: data.name,
@@ -43,13 +53,7 @@ export class ServiceServiceClient {
   }
 
   private validate(data: ServiceData) {
-    if (!data.name.trim()) {
-      throw new Error("Informe o nome do serviço.");
-    }
-
-    if (!Number.isFinite(data.price) || data.price < 0) {
-      throw new Error("O preço deve ser um valor igual ou maior que zero.");
-    }
+    this.validateNameAndPrice(data);
 
     if (
       !Number.isSafeInteger(data.duration) ||
@@ -61,6 +65,16 @@ export class ServiceServiceClient {
 
     if (!data.establishId.trim()) {
       throw new Error("O estabelecimento do serviço é obrigatório.");
+    }
+  }
+
+  private validateNameAndPrice(data: Pick<ServiceUpdateData, "name" | "price">) {
+    if (!data.name.trim()) {
+      throw new Error("Informe o nome do serviço.");
+    }
+
+    if (!Number.isFinite(data.price) || data.price < 0) {
+      throw new Error("O preço deve ser um valor igual ou maior que zero.");
     }
   }
 }

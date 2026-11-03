@@ -11,6 +11,20 @@ export interface EstablishmentServiceItem {
 }
 
 export interface EstablishmentBusinessHour {
+  id: string;
+  dayOfWeek: number;
+  openingTime: string;
+  closingTime: string;
+}
+
+export interface EstablishmentBusinessHourData {
+  establishmentId: string;
+  dayOfWeek: number;
+  openingTime: string;
+  closingTime: string;
+}
+
+export interface EstablishmentBusinessHourUpdateData {
   dayOfWeek: number;
   openingTime: string;
   closingTime: string;
@@ -99,6 +113,40 @@ export class EstablishmentServiceClient {
     return response.data.establishment;
   }
 
+  async registerBusinessHour(data: EstablishmentBusinessHourData): Promise<void> {
+    if (!data.establishmentId.trim()) {
+      throw new Error("O estabelecimento do horário é obrigatório.");
+    }
+
+    this.validateBusinessHourTimes(data);
+    await this.http.post("/establishment/register-hour", data);
+  }
+
+  async updateBusinessHour(
+    businessHourId: string,
+    data: EstablishmentBusinessHourUpdateData,
+  ): Promise<void> {
+    if (!businessHourId.trim()) {
+      throw new Error("O identificador do horário é obrigatório.");
+    }
+
+    this.validateBusinessHourTimes(data);
+    await this.http.patch("/establishment/update-hour", {
+      ...data,
+      businessHourId,
+    });
+  }
+
+  async deleteBusinessHour(businessHourId: string): Promise<void> {
+    if (!businessHourId.trim()) {
+      throw new Error("O identificador do horário é obrigatório.");
+    }
+
+    await this.http.delete("/establishment/delete-hour", {
+      data: { businessHourId },
+    });
+  }
+
   async getForOwner(): Promise<Establishment[]> {
     let response;
     try {
@@ -133,5 +181,25 @@ export class EstablishmentServiceClient {
     }
 
     return response.data.establishments;
+  }
+
+  private validateBusinessHourTimes(
+    data: EstablishmentBusinessHourUpdateData,
+  ) {
+    if (
+      !Number.isInteger(data.dayOfWeek) ||
+      data.dayOfWeek < 1 ||
+      data.dayOfWeek > 7
+    ) {
+      throw new Error("Selecione um dia da semana válido.");
+    }
+
+    if (
+      !/^\d{2}:\d{2}$/.test(data.openingTime) ||
+      !/^\d{2}:\d{2}$/.test(data.closingTime) ||
+      data.openingTime >= data.closingTime
+    ) {
+      throw new Error("O horário de abertura deve ser anterior ao fechamento.");
+    }
   }
 }

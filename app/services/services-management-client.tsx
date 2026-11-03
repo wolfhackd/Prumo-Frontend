@@ -8,7 +8,10 @@ import type {
   Establishment,
   EstablishmentServiceItem,
 } from "@/lib/services/establishments/establishment-service";
-import type { ServiceData } from "@/lib/services/establishments/service-service";
+import type {
+  ServiceData,
+  ServiceUpdateData,
+} from "@/lib/services/establishments/service-service";
 import { DashboardPageTitle } from "../dashboard/PageTitle";
 
 const inputClassName =
@@ -127,18 +130,22 @@ export function ServicesManagementClient() {
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
-    const data: ServiceData = {
-      name: String(formData.get("name")).trim(),
-      description: String(formData.get("description")).trim() || null,
-      price: Number(formData.get("price")),
-      duration: Number(formData.get("duration")),
-      establishId: establishment.id,
-    };
+    const name = String(formData.get("name")).trim();
+    const price = Number(formData.get("price"));
+    const duration = Number(formData.get("duration"));
 
     try {
       if (editingService) {
+        const data: ServiceUpdateData = { name, price, duration };
         await serviceService.update(editingService.id, data);
       } else {
+        const data: ServiceData = {
+          name,
+          description: String(formData.get("description")).trim() || null,
+          price,
+          duration,
+          establishId: establishment.id,
+        };
         await serviceService.create(data);
       }
 
@@ -395,14 +402,16 @@ export function ServicesManagementClient() {
                       className={inputClassName}
                       defaultValue={editingService?.duration ?? 30}
                       id="service-duration"
-                      min="30"
+                      min={editingService ? "1" : "30"}
                       name="duration"
                       required
-                      step="30"
+                      step={editingService ? "1" : "30"}
                       type="number"
                     />
                     <p className="mt-1 text-xs text-black/50">
-                      Informe blocos de 30 minutos.
+                      {editingService
+                        ? "Informe a duração em minutos."
+                        : "Informe blocos de 30 minutos."}
                     </p>
                   </div>
                 </div>
