@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Plus } from "lucide-react";
 import { Appointments } from "./Appointments";
 import { CustomerStats } from "./CustomerStats";
 import { GridStats } from "./GridStats";
@@ -29,13 +28,6 @@ export default function Dashboard() {
           </aside>
         </div>
       </main>
-      <button
-        type="button"
-        className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] right-4 z-30 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#FFCC00] px-4 py-2 text-xs font-semibold text-[#111111] shadow-[0_4px_14px_rgba(0,0,0,0.2)] transition-colors hover:bg-[#F2C000] md:bottom-6 md:right-6"
-      >
-        <Plus aria-hidden="true" className="size-4" />
-        Novo Agendamento
-      </button>
     </div>
   );
 }
