@@ -24,10 +24,28 @@ const weekdays = [
 const inputClassName =
   "mt-1.5 w-full rounded-xl border border-[#D8D4CC] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[#6155F5] focus:ring-2 focus:ring-[#6155F5]/15";
 
+const appointmentTimeError =
+  "Os agendamentos devem começar em horários terminados em :00 ou :30. Selecione um desses horários.";
+
 function getErrorMessage(error: unknown) {
   if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
     const message = error.response?.data?.message ?? error.response?.data?.error;
     if (message) {
+      const normalizedMessage = message
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+      const mentionsTime = /hor|time|minut/.test(normalizedMessage);
+      const mentionsHalfHourIntervals =
+        /(?:00.{0,40}30|30.{0,40}00)/.test(normalizedMessage) ||
+        /(?:multiplo|intervalo|bloco).{0,30}30|30.{0,30}(?:min|minute)/.test(
+          normalizedMessage,
+        );
+
+      if (mentionsTime && mentionsHalfHourIntervals) {
+        return appointmentTimeError;
+      }
+
       return message;
     }
   }
@@ -167,6 +185,10 @@ export function NewAppointmentButton({
         throw new Error(
           "O horário escolhido precisa estar dentro do funcionamento do estabelecimento.",
         );
+      }
+
+      if (start % 30 !== 0) {
+        throw new Error(appointmentTimeError);
       }
 
       await appointmentService.create({
@@ -347,9 +369,25 @@ export function NewAppointmentButton({
                     className={inputClassName}
                     id="appointment-hour"
                     name="hour"
+                    onChange={(event) => {
+                      event.currentTarget.setCustomValidity("");
+                      setSubmitError("");
+                    }}
+                    onInvalid={(event) => {
+                      if (event.currentTarget.validity.stepMismatch) {
+                        event.currentTarget.setCustomValidity(
+                          appointmentTimeError,
+                        );
+                        setSubmitError(appointmentTimeError);
+                      }
+                    }}
                     required
+                    step="1800"
                     type="time"
                   />
+                  <p className="mt-1 text-xs text-[#6B6B6B]">
+                    Os horários devem terminar em :00 ou :30.
+                  </p>
                 </div>
               </div>
 

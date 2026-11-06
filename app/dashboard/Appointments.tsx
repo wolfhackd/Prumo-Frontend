@@ -28,11 +28,50 @@ function formatTime(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "UTC",
   }).format(date);
 }
 
+function parseAppointmentDate(dateValue: string) {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?/.exec(
+      dateValue,
+    );
+
+  if (match) {
+    const [, year, month, day, hour, minute, second = "0", fraction = "0"] =
+      match;
+    const milliseconds = Number(`0.${fraction}`) * 1_000;
+
+    return new Date(
+      Date.UTC(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hour),
+        Number(minute),
+        Number(second),
+        milliseconds,
+      ),
+    );
+  }
+
+  const parsed = new Date(dateValue);
+  return new Date(
+    Date.UTC(
+      parsed.getFullYear(),
+      parsed.getMonth(),
+      parsed.getDate(),
+      parsed.getHours(),
+      parsed.getMinutes(),
+      parsed.getSeconds(),
+      parsed.getMilliseconds(),
+    ),
+  );
+}
+
 function formatTimeRange(dateValue: string, duration: number) {
-  const start = new Date(dateValue);
+  const start = parseAppointmentDate(dateValue);
   const end = new Date(start.getTime() + duration * 60_000);
 
   return `${formatTime(start)} - ${formatTime(end)}`;
@@ -41,7 +80,8 @@ function formatTimeRange(dateValue: string, duration: number) {
 function formatDate(dateValue: string) {
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
-  }).format(new Date(dateValue));
+    timeZone: "UTC",
+  }).format(parseAppointmentDate(dateValue));
 }
 
 function getInitials(name: string) {
@@ -357,7 +397,7 @@ export const Appointments = () => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {appointmentToCancel
-                ? `Deseja cancelar o agendamento de ${appointmentToCancel.client.name} para ${appointmentToCancel.service.name}, em ${formatDate(appointmentToCancel.data)} às ${formatTime(new Date(appointmentToCancel.data))}?`
+                ? `Deseja cancelar o agendamento de ${appointmentToCancel.client.name} para ${appointmentToCancel.service.name}, em ${formatDate(appointmentToCancel.data)} às ${formatTime(parseAppointmentDate(appointmentToCancel.data))}?`
                 : "Deseja cancelar este agendamento?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
