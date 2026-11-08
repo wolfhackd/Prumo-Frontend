@@ -3,31 +3,35 @@ import { Check, MoreHorizontal, X } from "lucide-react";
 const recentActivity = [
   {
     id: 1,
-    title: "Pedro Silva agendou Massagem",
-    subtitle: "relaxante às 11:30",
+    title: "Pedro Silva agendou",
+    subtitle: "Massagem relaxante às 11:30",
     status: "success",
-    avatar: "bg-[radial-gradient(circle_at_30%_30%,#f3ddbc_0%,#ad7d5b_35%,#3a2f2d_75%)]",
+    avatar:
+      "bg-[radial-gradient(circle_at_30%_30%,#f3ddbc_0%,#ad7d5b_35%,#3a2f2d_75%)]",
   },
   {
     id: 2,
-    title: "Pedro Silva agendou Massagem",
-    subtitle: "relaxante às 12:30",
+    title: "Pedro Silva agendou",
+    subtitle: "Massagem relaxante às 12:30",
     status: "success",
-    avatar: "bg-[radial-gradient(circle_at_30%_30%,#efd6b8_0%,#9d7158_35%,#332d2d_75%)]",
+    avatar:
+      "bg-[radial-gradient(circle_at_30%_30%,#efd6b8_0%,#9d7158_35%,#332d2d_75%)]",
   },
   {
     id: 3,
-    title: "Pedro Silva agendou Canelorelaxante",
-    subtitle: "às 10:30",
+    title: "Pedro Silva agendou",
+    subtitle: "Canelo relaxante às 10:30",
     status: "success",
-    avatar: "bg-[radial-gradient(circle_at_30%_30%,#efc698_0%,#915f42_35%,#2d2422_75%)]",
+    avatar:
+      "bg-[radial-gradient(circle_at_30%_30%,#efc698_0%,#915f42_35%,#2d2422_75%)]",
   },
   {
     id: 4,
-    title: "Pedro Silva agendou Canelorelaxante",
-    subtitle: "às 08:00",
+    title: "Pedro Silva agendou",
+    subtitle: "Massagem relaxante às 08:00",
     status: "error",
-    avatar: "bg-[radial-gradient(circle_at_30%_30%,#d3d3d3_0%,#7a716d_35%,#282828_75%)]",
+    avatar:
+      "bg-[radial-gradient(circle_at_30%_30%,#d3d3d3_0%,#7a716d_35%,#282828_75%)]",
   },
 ];
 
@@ -86,9 +90,7 @@ export function RecentActivity() {
                   : ""
               }`}
             >
-              <p className="text-xs leading-4 text-white">
-                {activity.title}
-              </p>
+              <p className="text-xs leading-4 text-white">{activity.title}</p>
               <p className="text-xs leading-4 text-white/75">
                 {activity.subtitle}
               </p>

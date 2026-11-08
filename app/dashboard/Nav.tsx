@@ -72,7 +72,7 @@ function MenuItems({ activePage }: { activePage: ActivePage }) {
           <span
             aria-disabled="true"
             title="Disponível em breve"
-            className="flex cursor-default items-center gap-3 rounded-lg px-4 py-3 text-white/85 transition-colors hover:bg-white/10"
+            className="flex cursor-default items-center gap-3 rounded-lg px-4 py-3 text-white/45"
           >
             <Icon aria-hidden="true" className="size-5 shrink-0" />
             <span>{label}</span>
@@ -272,7 +272,7 @@ export const Nav = ({ activePage = "dashboard" }: { activePage?: ActivePage }) =
                   <span
                     aria-disabled="true"
                     title="Disponível em breve"
-                    className="flex h-full min-h-16 cursor-default flex-col items-center justify-center gap-1 text-white/55"
+                    className="flex h-full min-h-16 cursor-default flex-col items-center justify-center gap-1 text-white/40"
                   >
                     <Icon aria-hidden="true" className="size-5" />
                     <span className="text-[10px] font-medium">{label}</span>
