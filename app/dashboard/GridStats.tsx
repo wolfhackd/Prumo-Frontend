@@ -28,13 +28,27 @@ const stats = [
   },
 ];
 
-function getTodayDate() {
-  const now = new Date();
+function formatDate(date: Date) {
   return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0"),
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
   ].join("-");
+}
+
+function getCurrentWeekDates() {
+  const today = new Date();
+  const monday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - ((today.getDay() + 6) % 7),
+  );
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    return formatDate(date);
+  });
 }
 
 function getLocalClockTimestamp(date: Date) {
@@ -115,6 +129,9 @@ export const GridStats = () => {
   const [todayAppointmentCount, setTodayAppointmentCount] = useState<
     number | null
   >(null);
+  const [weeklyAppointmentCount, setWeeklyAppointmentCount] = useState<
+    number | null
+  >(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<
     Appointment[]
   >([]);
@@ -151,40 +168,43 @@ export const GridStats = () => {
       setIsLoading(true);
       setErrorMessage("");
 
-      const todayRequest = appointmentService
-        .getByEstablishment(activeEstablishmentId, {
-          date: getTodayDate(),
-        })
-        .then((appointments) => {
-          if (isCurrent) {
-            setTodayAppointmentCount(appointments.length);
-          }
-        });
-      const upcomingRequest = appointmentService
-        .getByEstablishment(activeEstablishmentId, {
-          status: false,
-          date: getTodayDate(),
-        })
-        .then((appointments) => {
-          if (isCurrent) {
-            const now = getLocalClockTimestamp(new Date());
-            setUpcomingAppointments(
-              appointments
-                .filter(
-                  (appointment) =>
-                    !appointment.status &&
-                    getAppointmentTimestamp(appointment.data) > now,
-                )
-                .toSorted(
-                  (first, second) =>
-                    getAppointmentTimestamp(first.data) -
-                    getAppointmentTimestamp(second.data),
-                ),
-            );
-          }
-        });
+      const weekDates = getCurrentWeekDates();
+      const todayDate = formatDate(new Date());
+      const weekRequests = weekDates.map((date) =>
+        appointmentService.getByEstablishment(activeEstablishmentId, { date }),
+      );
 
-      Promise.all([todayRequest, upcomingRequest])
+      Promise.all(weekRequests)
+        .then((appointmentsByDay) => {
+          if (!isCurrent) {
+            return;
+          }
+
+          setWeeklyAppointmentCount(
+            appointmentsByDay.reduce(
+              (total, appointments) => total + appointments.length,
+              0,
+            ),
+          );
+          const todayAppointments =
+            appointmentsByDay[weekDates.indexOf(todayDate)] ?? [];
+          setTodayAppointmentCount(todayAppointments.length);
+
+          const now = getLocalClockTimestamp(new Date());
+          setUpcomingAppointments(
+            todayAppointments
+              .filter(
+                (appointment) =>
+                  !appointment.status &&
+                  getAppointmentTimestamp(appointment.data) > now,
+              )
+              .toSorted(
+                (first, second) =>
+                  getAppointmentTimestamp(first.data) -
+                  getAppointmentTimestamp(second.data),
+              ),
+          );
+        })
         .catch((error: unknown) => {
           if (isCurrent) {
             setErrorMessage(getErrorMessage(error));
@@ -258,6 +278,10 @@ export const GridStats = () => {
                           ? "..."
                           : formatNextAppointment(nextAppointment, currentTime)
                         : "Nenhum agendamento próximo"
+                    : label === "Total da semana"
+                      ? isLoading
+                        ? "..."
+                        : weeklyAppointmentCount ?? "—"
                       : value}
               </p>
               {errorMessage && (
