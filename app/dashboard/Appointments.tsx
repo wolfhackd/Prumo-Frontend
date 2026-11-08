@@ -24,6 +24,10 @@ const avatarColors = [
   "bg-[#8D9A9B] text-[#263538]",
 ];
 
+function notifyAppointmentsUpdated() {
+  window.dispatchEvent(new Event("prumo:appointments-updated"));
+}
+
 function formatTime(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
@@ -70,8 +74,12 @@ function parseAppointmentDate(dateValue: string) {
   );
 }
 
-function formatTimeRange(dateValue: string, duration: number) {
+function formatTimeRange(dateValue: string, duration?: number) {
   const start = parseAppointmentDate(dateValue);
+  if (duration === undefined) {
+    return formatTime(start);
+  }
+
   const end = new Date(start.getTime() + duration * 60_000);
 
   return `${formatTime(start)} - ${formatTime(end)}`;
@@ -133,6 +141,12 @@ export const Appointments = () => {
     const establishmentId = localStorage.getItem(
       "prumo:active-establishment-id",
     );
+    const now = new Date();
+    const today = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
 
     if (!establishmentId) {
       Promise.resolve().then(() => {
@@ -148,7 +162,7 @@ export const Appointments = () => {
     }
 
     appointmentService
-      .getByEstablishment(establishmentId)
+      .getByEstablishment(establishmentId, { status: false, date: today })
       .then((results) => {
         if (isCurrent) {
           setAppointments(
@@ -193,12 +207,21 @@ export const Appointments = () => {
     setCancellingAppointmentId(appointment.id);
 
     try {
-      await appointmentService.cancel(appointment.id, appointment.client.cpf);
+      const cpf = appointment.client.cpf;
+      if (!cpf) {
+        setCancelError("Não foi possível cancelar: CPF do cliente indisponível.");
+        return;
+      }
+
+      await appointmentService.cancel(appointment.id, cpf);
       setAppointments((current) =>
         current.filter(({ id }) => id !== appointment.id),
       );
-      setCancelSuccess(`Agendamento de ${appointment.client.name} cancelado.`);
+      setCancelSuccess(
+        `Agendamento de ${appointment.client.name ?? "cliente"} cancelado.`,
+      );
       setAppointmentToCancel(null);
+      notifyAppointmentsUpdated();
     } catch (error: unknown) {
       setCancelError(
         getErrorMessage(
@@ -219,13 +242,12 @@ export const Appointments = () => {
     try {
       await appointmentService.checkIn(appointment.id);
       setAppointments((current) =>
-        current.map((item) =>
-          item.id === appointment.id ? { ...item, status: true } : item,
-        ),
+        current.filter((item) => item.id !== appointment.id),
       );
       setCheckInSuccess(
-        `Check-in de ${appointment.client.name} realizado com sucesso.`,
+        `Check-in de ${appointment.client.name ?? "cliente"} realizado com sucesso.`,
       );
+      notifyAppointmentsUpdated();
     } catch (error: unknown) {
       setCheckInError(
         getErrorMessage(
@@ -319,14 +341,16 @@ export const Appointments = () => {
                   aria-hidden="true"
                   className={`flex size-10 items-center justify-center rounded-full text-xs font-bold sm:size-11 ${avatarColors[index % avatarColors.length]}`}
                 >
-                  {getInitials(appointment.client.name)}
+                  {getInitials(appointment.client.name ?? "Cliente")}
                 </div>
 
                 <div className="min-w-0 self-start pt-0.5 pr-5">
                   <p className="truncate text-xs font-semibold sm:text-sm">
-                    {appointment.client.name}
+                    {appointment.client.name ?? "Cliente"}
                   </p>
-                  <p className="truncate text-xs">{appointment.service.name}</p>
+                  <p className="truncate text-xs">
+                    {appointment.service.name ?? "Serviço"}
+                  </p>
                   <p className="mt-1 truncate text-[11px] text-[#6B6B6B] sm:text-xs">
                     {formatDate(appointment.data)}
                   </p>
@@ -362,8 +386,14 @@ export const Appointments = () => {
                   </button>
                   <button
                     disabled={
+                      !appointment.client.cpf ||
                       cancellingAppointmentId !== null ||
                       checkingInAppointmentId !== null
+                    }
+                    title={
+                      appointment.client.cpf
+                        ? undefined
+                        : "CPF do cliente indisponível para cancelar."
                     }
                     onClick={() => {
                       setCancelError("");
@@ -397,7 +427,7 @@ export const Appointments = () => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {appointmentToCancel
-                ? `Deseja cancelar o agendamento de ${appointmentToCancel.client.name} para ${appointmentToCancel.service.name}, em ${formatDate(appointmentToCancel.data)} às ${formatTime(parseAppointmentDate(appointmentToCancel.data))}?`
+                ? `Deseja cancelar o agendamento de ${appointmentToCancel.client.name ?? "cliente"} para ${appointmentToCancel.service.name ?? "serviço"}, em ${formatDate(appointmentToCancel.data)} às ${formatTime(parseAppointmentDate(appointmentToCancel.data))}?`
                 : "Deseja cancelar este agendamento?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -425,7 +455,12 @@ export const Appointments = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <NewAppointmentButton onCreated={retry} />
+      <NewAppointmentButton
+        onCreated={() => {
+          retry();
+          notifyAppointmentsUpdated();
+        }}
+      />
     </>
   );
 };

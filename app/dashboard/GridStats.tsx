@@ -1,8 +1,14 @@
+"use client";
+
+import axios from "axios";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   UserRound,
 } from "lucide-react";
+import { appointmentService } from "@/lib/services";
+import type { Appointment } from "@/lib/services/establishments/appointment-service";
 import { DashboardPageTitle } from "./PageTitle";
 
 const stats = [
@@ -13,7 +19,6 @@ const stats = [
   },
   {
     label: "Próximo cliente",
-    value: "Ana Souza em 15 min",
     icon: UserRound,
   },
   {
@@ -23,7 +28,201 @@ const stats = [
   },
 ];
 
+function getTodayDate() {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function getLocalClockTimestamp(date: Date) {
+  return Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+    date.getMilliseconds(),
+  );
+}
+
+function getAppointmentTimestamp(dateValue: string) {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?/.exec(
+      dateValue,
+    );
+
+  if (!match) {
+    return Date.parse(dateValue);
+  }
+
+  const [, year, month, day, hour, minute, second = "0", fraction = "0"] =
+    match;
+
+  return Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+    Number(`0.${fraction}`) * 1_000,
+  );
+}
+
+function getErrorMessage(error: unknown) {
+  const apiMessage = axios.isAxiosError<{
+    message?: string;
+    error?: string;
+  }>(error)
+    ? (error.response?.data?.message ?? error.response?.data?.error)
+    : undefined;
+
+  return (
+    apiMessage ??
+    (error instanceof Error
+      ? error.message
+      : "Não foi possível carregar os agendamentos.")
+  );
+}
+
+function formatNextAppointment(appointment: Appointment, now: number) {
+  const appointmentTime = getAppointmentTimestamp(appointment.data);
+  const minutesUntil = Math.ceil((appointmentTime - now) / 60_000);
+  const name = appointment.client.name ?? "Cliente";
+
+  if (minutesUntil <= 0) {
+    return `${name} agora`;
+  }
+
+  if (minutesUntil < 60) {
+    return `${name} em ${minutesUntil} min`;
+  }
+
+  const time = new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).format(appointmentTime);
+
+  return `${name} às ${time}`;
+}
+
 export const GridStats = () => {
+  const [todayAppointmentCount, setTodayAppointmentCount] = useState<
+    number | null
+  >(null);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<
+    Appointment[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isCurrent = true;
+    const clockTimeout = window.setTimeout(() => {
+      if (isCurrent) {
+        setCurrentTime(getLocalClockTimestamp(new Date()));
+      }
+    }, 0);
+    const establishmentId = localStorage.getItem(
+      "prumo:active-establishment-id",
+    );
+
+    if (!establishmentId) {
+      Promise.resolve().then(() => {
+        if (isCurrent) {
+          setIsLoading(false);
+        }
+      });
+
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    const activeEstablishmentId = establishmentId;
+
+    function loadAppointments() {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const todayRequest = appointmentService
+        .getByEstablishment(activeEstablishmentId, {
+          date: getTodayDate(),
+        })
+        .then((appointments) => {
+          if (isCurrent) {
+            setTodayAppointmentCount(appointments.length);
+          }
+        });
+      const upcomingRequest = appointmentService
+        .getByEstablishment(activeEstablishmentId, {
+          status: false,
+          date: getTodayDate(),
+        })
+        .then((appointments) => {
+          if (isCurrent) {
+            const now = getLocalClockTimestamp(new Date());
+            setUpcomingAppointments(
+              appointments
+                .filter(
+                  (appointment) =>
+                    !appointment.status &&
+                    getAppointmentTimestamp(appointment.data) > now,
+                )
+                .toSorted(
+                  (first, second) =>
+                    getAppointmentTimestamp(first.data) -
+                    getAppointmentTimestamp(second.data),
+                ),
+            );
+          }
+        });
+
+      Promise.all([todayRequest, upcomingRequest])
+        .catch((error: unknown) => {
+          if (isCurrent) {
+            setErrorMessage(getErrorMessage(error));
+          }
+        })
+        .finally(() => {
+          if (isCurrent) {
+            setIsLoading(false);
+          }
+        });
+    }
+
+    loadAppointments();
+    window.addEventListener("prumo:appointments-updated", loadAppointments);
+    const timer = window.setInterval(
+      () => setCurrentTime(getLocalClockTimestamp(new Date())),
+      60_000,
+    );
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(clockTimeout);
+      window.removeEventListener(
+        "prumo:appointments-updated",
+        loadAppointments,
+      );
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const nextAppointment =
+    currentTime === null
+      ? upcomingAppointments[0]
+      : upcomingAppointments.find(
+          (appointment) =>
+            getAppointmentTimestamp(appointment.data) > currentTime,
+        );
+
   return (
     <section aria-labelledby="dashboard-summary-title">
       <DashboardPageTitle
@@ -47,8 +246,25 @@ export const GridStats = () => {
                   label === "Próximo cliente" ? "text-sm" : "text-2xl"
                 }`}
               >
-                {value}
+                {label === "Agendamentos hoje"
+                  ? isLoading
+                    ? "..."
+                    : todayAppointmentCount ?? "—"
+                  : label === "Próximo cliente"
+                    ? isLoading
+                      ? "..."
+                      : nextAppointment
+                        ? currentTime === null
+                          ? "..."
+                          : formatNextAppointment(nextAppointment, currentTime)
+                        : "Nenhum agendamento próximo"
+                      : value}
               </p>
+              {errorMessage && (
+                <p aria-live="polite" className="mt-1 text-[10px] text-red-700">
+                  {errorMessage}
+                </p>
+              )}
             </div>
             <Icon
               aria-hidden="true"

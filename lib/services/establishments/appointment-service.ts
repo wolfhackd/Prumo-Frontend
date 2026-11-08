@@ -4,24 +4,26 @@ export interface Appointment {
   id: string;
   data: string;
   status: boolean;
-  establishmentId: string;
-  serviceId: string;
-  clientId: string;
   client: {
-    id: string;
-    name: string;
-    cpf: string;
-    phone: string;
-    email: string;
+    id?: string;
+    name?: string;
+    cpf?: string;
+    phone?: string;
+    email?: string;
   };
   service: {
-    id: string;
-    name: string;
-    description: string | null;
-    price: number;
-    duration: number;
-    establishmentId: string;
+    id?: string;
+    name?: string;
+    description?: string | null;
+    price?: number;
+    duration?: number;
+    establishmentId?: string;
   };
+}
+
+export interface AppointmentFilters {
+  status?: boolean;
+  date?: string;
 }
 
 export interface AppointmentCreateData {
@@ -35,42 +37,50 @@ export interface AppointmentCreateData {
   email: string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOptionalStringProperties(
+  value: Record<string, unknown>,
+  properties: string[],
+) {
+  return properties.every(
+    (property) =>
+      value[property] === undefined || typeof value[property] === "string",
+  );
+}
+
 function isAppointment(value: unknown): value is Appointment {
-  if (typeof value !== "object" || value === null) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const appointment = value as Record<string, unknown>;
-  const client = appointment.client;
-  const service = appointment.service;
-
   return (
-    typeof appointment.id === "string" &&
-    typeof appointment.data === "string" &&
-    !Number.isNaN(Date.parse(appointment.data)) &&
-    typeof appointment.status === "boolean" &&
-    typeof appointment.establishmentId === "string" &&
-    typeof appointment.serviceId === "string" &&
-    typeof appointment.clientId === "string" &&
-    typeof client === "object" &&
-    client !== null &&
-    "id" in client &&
-    typeof client.id === "string" &&
-    "name" in client &&
-    typeof client.name === "string" &&
-    "cpf" in client &&
-    typeof client.cpf === "string" &&
-    client.cpf.trim().length > 0 &&
-    typeof service === "object" &&
-    service !== null &&
-    "id" in service &&
-    typeof service.id === "string" &&
-    "name" in service &&
-    typeof service.name === "string" &&
-    "duration" in service &&
-    typeof service.duration === "number" &&
-    Number.isFinite(service.duration) &&
-    service.duration > 0
+    typeof value.id === "string" &&
+    typeof value.data === "string" &&
+    !Number.isNaN(Date.parse(value.data)) &&
+    typeof value.status === "boolean" &&
+    isRecord(value.client) &&
+    hasOptionalStringProperties(value.client, [
+      "id",
+      "name",
+      "cpf",
+      "phone",
+      "email",
+    ]) &&
+    isRecord(value.service) &&
+    hasOptionalStringProperties(value.service, ["id", "name", "establishmentId"]) &&
+    (value.service.description === undefined ||
+      value.service.description === null ||
+      typeof value.service.description === "string") &&
+    (value.service.price === undefined ||
+      (typeof value.service.price === "number" &&
+        Number.isFinite(value.service.price))) &&
+    (value.service.duration === undefined ||
+      (typeof value.service.duration === "number" &&
+        Number.isFinite(value.service.duration) &&
+        value.service.duration > 0))
   );
 }
 
@@ -122,13 +132,24 @@ export class AppointmentServiceClient {
     });
   }
 
-  async getByEstablishment(establishmentId: string): Promise<Appointment[]> {
+  async getByEstablishment(
+    establishmentId: string,
+    filters: AppointmentFilters = {},
+  ): Promise<Appointment[]> {
     if (!establishmentId.trim()) {
       throw new Error("O identificador do estabelecimento é obrigatório.");
     }
 
+    if (
+      filters.date !== undefined &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(filters.date)
+    ) {
+      throw new Error("Informe uma data válida para buscar agendamentos.");
+    }
+
     const response = await this.http.get<unknown>(
       `/appointment/establishment/${encodeURIComponent(establishmentId)}`,
+      { params: filters },
     );
     const data = response.data;
 
